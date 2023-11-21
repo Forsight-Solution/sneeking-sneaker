@@ -8,8 +8,8 @@ import json
 
 dotenv.load_dotenv()
 
-def apify_call(payload):
-    scaper_url = f"https://api.apify.com/v2/actor-tasks/observant_ginkgo~api/run-sync-get-dataset-items?token={os.getenv( 'APIFY-TOKEN')}"
+def apify_call(likes_count,payload):
+    scaper_url = f"https://api.apify.com/v2/actor-tasks/royal_whale~sneakers-api/run-sync-get-dataset-items?token={os.getenv( 'APIFY-TOKEN')}"
 
     headers = {
         'Content-Type': 'application/json',
@@ -18,11 +18,12 @@ def apify_call(payload):
     result = requests.get(scaper_url, headers=headers, data=payload)
 
     data = result.json()
-    print(data)
+    # print(data)
 
     df = pd.DataFrame.from_dict(data)
 
     df.sort_values(by=['likesCount'], inplace=True, ascending=False)
+    df = df[df['likesCount'] >= likes_count]
 
     final_data = []
     for index, row in df.iterrows():
@@ -33,6 +34,10 @@ def apify_call(payload):
 
 app = FastAPI()
 
-@app.post("/")
+@app.post("/insta-content")
 async def root(payload: dict):
-    return {apify_call(json.dumps(payload))}
+    # print(payload)
+    likes_count = payload['likesCount']
+    del payload['likesCount']
+    # print(likes_count, payload)
+    return {"items": apify_call(likes_count, json.dumps(payload))}
